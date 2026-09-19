@@ -153,3 +153,25 @@
   .agency-scatter-legend{grid-template-columns:1fr}
   .agency-scatter svg{min-height:300px}
 }
+
+
+/* Comptabilité générale · vue agence */
+.agency-accounting-kpis{grid-template-columns:repeat(6,minmax(0,1fr))}
+.agency-accounting-top{display:grid;grid-template-columns:minmax(0,1.65fr) minmax(330px,.85fr);gap:14px;margin-bottom:14px}
+.accounting-agency-scatter svg{display:block;width:100%;min-height:300px;overflow:visible}
+.accounting-agency-grid{stroke:#dce7f0;stroke-width:1;stroke-dasharray:4 4px}
+.accounting-agency-axis{stroke:#66809a;stroke-width:1.4}
+.accounting-agency-scatter text{fill:#637b91;font-size:9px}
+.accounting-agency-axis-label{fill:#284c70!important;font-weight:750}
+.accounting-agency-dot{cursor:pointer}
+.accounting-agency-dot circle{stroke:#fff;stroke-width:2}
+.accounting-agency-dot.ok circle{fill:#3f8ff0;fill-opacity:.84}
+.accounting-agency-dot.watch circle{fill:#ff982f;fill-opacity:.88}
+.accounting-agency-dot.alert circle{fill:#f04444;fill-opacity:.9}
+.accounting-agency-dot:hover circle{stroke:#173f68;stroke-width:3}
+.accounting-agency-dot text{fill:#173f68;font-weight:750;paint-order:stroke;stroke:#fff;stroke-width:3px;stroke-linejoin:round}
+.accounting-agency-legend{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:5px;padding:9px 12px;border:1px solid #e0e8f0;border-radius:9px;background:#fbfdff;font-size:9px;color:#60778d}
+.accounting-agency-legend b{color:#173f68}.accounting-agency-legend span{display:inline-flex;align-items:center;gap:5px}.accounting-agency-legend i{width:10px;height:10px;border-radius:50%;display:inline-block}.accounting-agency-legend i.ok{background:#3f8ff0}.accounting-agency-legend i.watch{background:#ff982f}.accounting-agency-legend i.alert{background:#f04444}.accounting-agency-legend em{font-style:normal;margin-left:auto}
+.accounting-heatmap td:not(:first-child){text-align:center;font-weight:800;cursor:pointer}.accounting-heatmap .heat-alert{background:#ffd0c9;color:#a62a20}.accounting-heatmap .heat-watch{background:#ffe1b8;color:#9a5a00}.accounting-heatmap .heat-none{background:#f3f6f9;color:#a1afbc}
+@media(max-width:1200px){.agency-accounting-kpis{grid-template-columns:repeat(3,1fr)}.agency-accounting-top{grid-template-columns:1fr}}
+@media(max-width:700px){.agency-accounting-kpis{grid-template-columns:1fr 1fr}}
