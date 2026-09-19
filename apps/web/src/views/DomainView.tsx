@@ -164,7 +164,7 @@ function FlowView({current,all,onSelect,kind}:{current:Eple|null;all:Eple[];onSe
  if(!current)return <AgencyFlowView all={all} onSelect={onSelect} kind={kind}/>;
  if(loading)return <div className="page"><div className="loading">Construction de la vue {label}…</div></div>;
  const allEntries=(data?.entries||[]).filter((r:any)=>String(r.account||'').startsWith(expense?'6':'7'));
- const exercises:number[]=Array.from(allEntries.reduce((years:Set<number>,r:any)=>{const d=new Date(r.periodDate);if(!Number.isNaN(d.getTime()))years.add(d.getFullYear());return years},new Set<number>())).sort((a,b)=>b-a);
+ const exercises: number[] = [...new Set<number>(allEntries.map((r: any): number | null => {const d = new Date(r.periodDate);return Number.isNaN(d.getTime()) ? null : d.getFullYear();}).filter((year: number | null): year is number => year !== null))].sort((a: number, b: number) => b - a);
  const currentExercise:number=new Date().getFullYear();
  const selectedExercise:number=exercises.includes(exercise)?exercise:(exercises.includes(currentExercise)?currentExercise:(exercises[0]??currentExercise));
  const entries=allEntries.filter((r:any)=>new Date(r.periodDate).getFullYear()===selectedExercise),total=entries.reduce((n:number,r:any)=>n+Math.abs(Number(r.movement||0)),0),now=new Date(),cut=new Date(now.getTime()-30*86400000),recent=selectedExercise===now.getFullYear()?entries.filter((r:any)=>new Date(r.periodDate)>=cut):[],recentTotal=recent.reduce((n:number,r:any)=>n+Math.abs(Number(r.movement||0)),0);
