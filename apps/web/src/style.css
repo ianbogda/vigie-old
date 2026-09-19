@@ -50,3 +50,17 @@
 
 /* Bouton d'action secondaire — même langage visuel que les boutons de tutoriel. */
 .ui-soft-action{border:1px solid #cfe0f2;background:#f3f8fd;color:#174a78;border-radius:10px;padding:8px 11px;display:inline-flex;align-items:center;justify-content:center;gap:6px;font:inherit;font-weight:750;line-height:1;cursor:pointer;transition:background-color .12s,border-color .12s,transform .12s}.ui-soft-action:hover{background:#e8f2fb;border-color:#aacbe7}.ui-soft-action:active{transform:translateY(1px)}.ui-soft-action:focus-visible{outline:3px solid rgba(23,74,120,.18);outline-offset:2px}
+
+/* YGPIE1 — navigation compte -> pièces */
+.ygpie1-account-row{cursor:pointer;transition:background-color .12s}
+.ygpie1-account-row:hover{background:#f3f8fd}
+.ygpie1-account-row.selected{background:#e8f2fb}
+.account-link{appearance:none;border:0;background:transparent;padding:0;color:#174a78;font:inherit;font-weight:800;cursor:pointer;text-decoration:underline;text-decoration-color:transparent;text-underline-offset:3px}
+.account-link:hover{text-decoration-color:currentColor}
+.ygpie1-pieces-anchor{scroll-margin-top:24px}
+.ygpie1-pieces-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:18px}
+.ygpie1-pieces-head h3{margin:0}
+.ygpie1-pieces-head h3 small{font-size:.75em;font-weight:600;color:#6b7a90;margin-left:8px}
+.ygpie1-active-filter{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:12px 14px;margin:12px 0;background:#f3f8fd;border:1px solid #cfe0f2;border-radius:12px}
+.ygpie1-active-filter>div{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+.ygpie1-active-filter span{color:#5d6d83;font-size:.92rem}
