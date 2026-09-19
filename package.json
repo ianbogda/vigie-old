@@ -1,6 +1,6 @@
 {
   "name": "vigie-eple",
-  "version": "0.0.51",
+  "version": "0.0.57",
   "private": true,
   "workspaces": [
     "apps/*",
