@@ -10,7 +10,7 @@ export const api = {
   login: (email:string,password:string) => fetch('/api/auth/login',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({email,password})}).then(json<any>),
   logout: () => fetch('/api/auth/logout',{method:'POST'}).then(json<any>),
   dashboard: () => fetch('/api/dashboard').then(json<Dashboard>),
-  budget: (ets:string) => fetch(`/api/budget/${encodeURIComponent(ets)}`).then(json<any>),
+  budget: (ets:string,exercise?:number) => fetch(`/api/budget/${encodeURIComponent(ets)}${exercise?`?exercise=${exercise}`:''}`).then(json<any>),
   financial: (ets:string) => fetch(`/api/financial/${encodeURIComponent(ets)}`).then(json<any>),
   accounting: (ets:string) => fetch(`/api/accounting/${encodeURIComponent(ets)}`).then(json<any>),
   aged: (ets:string,kind:'clients'|'suppliers') => fetch(`/api/aged/${encodeURIComponent(ets)}/${kind}`).then(json<any>),

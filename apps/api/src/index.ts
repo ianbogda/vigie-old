@@ -492,7 +492,12 @@ app.get('/api/financial/:ets',async(req:any,reply:any)=>{try{
  // YFDR peut contenir des exercices pour lesquels aucune EBLC de clôture n'est encore importée : on conserve au moins la courbe FDR.
  for(const x of fdrHistory){const year=Number(x.exercise);if(!indicatorHistory.some((r:any)=>r.exercise===year))indicatorHistory.push({exercise:year,snapshotDate:null,isCurrent:year===currentYear,isFinal:!!x.is_final,fdr:Number(x.amount),fdrFinal:!!x.is_final,fdrDays:null,operatingCharges:null,treasury:null,treasuryDays:null,result:null,caf:null,cafKind:null,bfr:null})}
  indicatorHistory.sort((a:any,b:any)=>a.exercise-b.exercise);
- return {establishment:{id:establishment.id,name:establishment.name,uai:establishment.uai,opaleEntity:entity},sources:{EBLC:eblc?.snapshot_date||null,YCONSDEP:depSnap?.snapshot_date||null,YCONSREC:recSnap?.snapshot_date||null,YBALAC:clientSnap?.snapshot_date||null,YBALAF:supplierSnap?.snapshot_date||null},expenses,revenues,receivables,payables,balance,fdr,fdrHistory,indicatorHistory,srh:null};
+ const executionHistory:any={expenses:[],revenues:[]};
+ for(const [sourceType,key] of [['YCONSDEP','expenses'],['YCONSREC','revenues']] as const){
+  const snaps=(await pool.query(`select id,exercise,snapshot_date,period,period_end,created_at from financial_snapshots where upper(opale_entity)=upper($1) and source_type=$2 and exercise is not null order by exercise,snapshot_date,created_at`,[entity,sourceType])).rows;
+  for(const snap of snaps){const q=(await pool.query(`select coalesce(sum(accounted),0) accounted from financial_execution_lines where snapshot_id=$1`,[snap.id])).rows[0];executionHistory[key].push({exercise:Number(snap.exercise),snapshotDate:snap.snapshot_date,period:snap.period_end||snap.period||null,accounted:Number(q.accounted||0)})}
+ }
+ return {establishment:{id:establishment.id,name:establishment.name,uai:establishment.uai,opaleEntity:entity},sources:{EBLC:eblc?.snapshot_date||null,YCONSDEP:depSnap?.snapshot_date||null,YCONSREC:recSnap?.snapshot_date||null,YBALAC:clientSnap?.snapshot_date||null,YBALAF:supplierSnap?.snapshot_date||null},executionHistory,expenses,revenues,receivables,payables,balance,fdr,fdrHistory,indicatorHistory,srh:null};
 }catch(e:any){req.log.error(e);return reply.code(400).send({error:e.message||'Analyse financière impossible'})}});
 
 app.get('/api/accounting/:ets',async(req:any,reply:any)=>{try{
@@ -517,8 +522,8 @@ app.get('/api/aged/:ets/:kind',async(req:any,reply:any)=>{try{
 
 app.get('/api/budget/:ets',async(req:any,reply:any)=>{try{
  const ets=String(req.params.ets||'').trim();const establishment=await requireEstablishment(req,reply,ets);if(!establishment)return;
- const entity=String(establishment.opale_entity||ets);const snap=(await pool.query(`select * from budget_snapshots where upper(coalesce(opale_entity,''))=upper($1) order by snapshot_date desc,created_at desc limit 1`,[entity])).rows[0];
- if(!snap)return {establishment:{id:establishment.id,uai:establishment.uai,name:establishment.name,opaleEntity:establishment.opale_entity},snapshot:null,summary:null,services:[],rows:[],signals:[]};
+ const entity=String(establishment.opale_entity||ets);const requestedExercise=Number(req.query?.exercise||0)||null;const availableExercises=(await pool.query(`select distinct extract(year from snapshot_date)::int exercise from budget_snapshots where upper(coalesce(opale_entity,''))=upper($1) and snapshot_date is not null order by exercise desc`,[entity])).rows.map((r:any)=>Number(r.exercise));const effectiveExercise=requestedExercise&&availableExercises.includes(requestedExercise)?requestedExercise:(availableExercises[0]??null);const snap=(await pool.query(`select * from budget_snapshots where upper(coalesce(opale_entity,''))=upper($1) and ($2::int is null or extract(year from snapshot_date)::int=$2) order by snapshot_date desc,created_at desc limit 1`,[entity,effectiveExercise])).rows[0];
+ if(!snap)return {establishment:{id:establishment.id,uai:establishment.uai,name:establishment.name,opaleEntity:establishment.opale_entity},availableExercises,snapshot:null,summary:null,services:[],rows:[],signals:[]};
  const lines=(await pool.query(`select line_no,raw_dimensions,budget,committed,accounted,in_progress,available from budget_lines where snapshot_id=$1 order by line_no`,[snap.id])).rows;
  const n=(v:any)=>Number(v||0),metric=(xs:any[])=>xs.reduce((a:any,x:any)=>({budget:a.budget+n(x.budget),committed:a.committed+n(x.committed),accounted:a.accounted+n(x.accounted),inProgress:a.inProgress+n(x.in_progress),available:a.available+n(x.available)}),{budget:0,committed:0,accounted:0,inProgress:0,available:0});
  const dims=(x:any)=>typeof x.raw_dimensions==='string'?JSON.parse(x.raw_dimensions):x.raw_dimensions;
@@ -560,7 +565,7 @@ app.get('/api/budget/:ets',async(req:any,reply:any)=>{try{
  }).filter(Boolean);
  const signals=services.filter((s:any)=>s.direction==='DEP'&&s.budget>0&&s.committed/s.budget>=.85).map((s:any)=>({level:s.committed/s.budget>=1?'alert':'watch',service:s.code,title:`${s.code} : ${(s.committed/s.budget*100).toFixed(0)} % engagé`,detail:`${s.committed.toFixed(2)} € engagés sur ${s.budget.toFixed(2)} €.`}));
  const sourceRows=parsed.map((x:any)=>({lineNo:x.line_no,direction:direction(x)||'AUTRE',cgr:(x.dimension.cgr||[]).map((p:any)=>({level:p.level,code:p.code,label:p.label})),posts:(x.dimension.posts||[]).map((p:any)=>({level:p.level,code:p.code,label:p.label})),account:x.dimension.account||'',accountLabel:x.dimension.accountLabel||'',budget:n(x.budget),committed:n(x.committed),accounted:n(x.accounted),inProgress:n(x.in_progress),available:n(x.available)}));
- return {establishment:{id:establishment.id,uai:establishment.uai,name:establishment.name,opaleEntity:establishment.opale_entity},snapshot:{id:snap.id,date:snap.snapshot_date,filename:snap.source_filename,createdAt:snap.created_at,rowCount:snap.row_count},summary,totals,scopes,services,budgetServices,signals,sourceRows};
+ return {establishment:{id:establishment.id,uai:establishment.uai,name:establishment.name,opaleEntity:establishment.opale_entity},availableExercises,snapshot:{id:snap.id,date:snap.snapshot_date,filename:snap.source_filename,createdAt:snap.created_at,rowCount:snap.row_count},summary,totals,scopes,services,budgetServices,signals,sourceRows};
 }catch(e:any){req.log.error(e);return reply.code(400).send({error:e.message||'Lecture budgétaire impossible'})}});
 
 app.get('/api/analysis', async () => {
@@ -619,23 +624,25 @@ app.get('/api/admin/agencies',async(req:any,reply:any)=>{if(!isAdmin(req))return
 
 app.get('/api/dashboard', async (req:any) => {
   const allowed=await allowedEstablishments(req);const allowedIds=allowed.map((x:any)=>Number(x.id));
-  const [registry,balances,budgets,purchases,fdrs,treasuries] = await Promise.all([
+  const [registry,balances,budgets,purchases,fdrs,treasuries,financials] = await Promise.all([
     pool.query(`select id,uai,name,opale_entity,is_active from establishments where id=any($1::bigint[]) order by name`,[allowedIds]),
     pool.query(`select distinct on (coalesce(nullif(opale_entity,''),establishment_name)) id,coalesce(nullif(opale_entity,''),establishment_name) source_key,establishment_name,opale_entity,opale_entity_label,snapshot_date,created_at from balance_snapshots order by coalesce(nullif(opale_entity,''),establishment_name),snapshot_date desc,created_at desc`),
     pool.query(`select distinct on (coalesce(nullif(opale_entity,''),establishment_name)) id,coalesce(nullif(opale_entity,''),establishment_name) source_key,establishment_name,opale_entity,snapshot_date,created_at from budget_snapshots order by coalesce(nullif(opale_entity,''),establishment_name),snapshot_date desc,created_at desc`),
     pool.query(`select distinct on (establishment_name) id,establishment_name source_key,establishment_name,snapshot_date,created_at from purchase_snapshots order by establishment_name,snapshot_date desc,created_at desc`),
     pool.query(`select distinct on (establishment_name) id,establishment_name source_key,establishment_name,snapshot_date,created_at from fdr_snapshots order by establishment_name,snapshot_date desc,created_at desc`),
-    pool.query(`select distinct on (opale_entity) id,opale_entity source_key,opale_entity,opale_entity establishment_name,source_format,period_to snapshot_date,period_to,created_at from accounting_imports order by opale_entity,period_to desc nulls last,created_at desc`)
+    pool.query(`select distinct on (opale_entity) id,opale_entity source_key,opale_entity,opale_entity establishment_name,source_format,period_to snapshot_date,period_to,created_at from accounting_imports order by opale_entity,created_at desc`),
+    pool.query(`select distinct on (opale_entity) id,opale_entity source_key,opale_entity,opale_entity establishment_name,snapshot_date,created_at from financial_snapshots order by opale_entity,created_at desc`)
   ]);
   const map=new Map<string,any>();
   const archived=new Set(registry.rows.filter((x:any)=>!x.is_active).flatMap((x:any)=>[x.opale_entity,x.uai].filter(Boolean)));
-  const ensure=(key:string,name?:string)=>{if(archived.has(key))return null;if(!map.has(key))map.set(key,{key,name:name||key,uai:null,registryId:null,opaleEntity:key,sources:{balance:null,budget:null,purchases:null,fdr:null,treasury:null},signals:[]});return map.get(key)};
+  const ensure=(key:string,name?:string)=>{if(archived.has(key))return null;if(!map.has(key))map.set(key,{key,name:name||key,uai:null,registryId:null,opaleEntity:key,sources:{balance:null,budget:null,purchases:null,fdr:null,treasury:null,financial:null},signals:[]});return map.get(key)};
   for(const x of registry.rows.filter((x:any)=>x.is_active)){const key=x.opale_entity||x.uai;const e=ensure(key,x.name);if(e){e.name=x.name;e.uai=x.uai;e.registryId=x.id;e.opaleEntity=x.opale_entity||null}}
   for(const x of balances.rows){const e=ensure(x.source_key,x.opale_entity_label||x.establishment_name);if(e){e.name=e.registryId?e.name:(x.opale_entity_label||e.name);e.sources.balance=x}}
   for(const x of budgets.rows){const e=ensure(x.source_key,x.establishment_name);if(e)e.sources.budget=x}
   for(const x of purchases.rows){const e=ensure(x.source_key,x.establishment_name);if(e)e.sources.purchases=x}
   for(const x of fdrs.rows){const e=ensure(x.source_key,x.establishment_name);if(e)e.sources.fdr=x}
   for(const x of treasuries.rows){const e=ensure(x.source_key,x.establishment_name);if(e)e.sources.treasury=x}
+  for(const x of financials.rows){const e=ensure(x.source_key,x.establishment_name);if(e)e.sources.financial=x}
   const severity=(xs:any[])=>xs.some(x=>x.level==='alert')?'alert':xs.some(x=>x.level==='watch')?'watch':'ok';
   const establishments:any[]=[]; let totalBudget=0,totalAvailable=0,totalAccounted=0,totalCommitted=0,totalInProgress=0;
   for(const e of map.values()){
@@ -671,8 +678,8 @@ app.get('/api/dashboard', async (req:any) => {
       states.treasury=severity(e.signals.filter((x:any)=>x.domain==='Trésorerie'));
     }
     const uai=e.uai||uaiOf(e.sources.balance?.opale_entity_label,e.sources.balance?.establishment_name,e.sources.budget?.establishment_name,e.sources.purchases?.establishment_name,e.sources.fdr?.establishment_name,e.sources.treasury?.establishment_name,e.name);
-    const dates=Object.values(e.sources).filter(Boolean).map((x:any)=>String(x.snapshot_date).slice(0,10)).sort();
-    const freshness=dates.length?dates[dates.length-1]:null;
+    const updateDates=Object.values(e.sources).filter(Boolean).map((x:any)=>String(x.created_at||x.snapshot_date||'')).filter(Boolean).sort();
+    const freshness=updateDates.length?updateDates[updateDates.length-1]:null;
     const staleSources=Object.entries(e.sources).filter(([,x]:any)=>x&&((Date.now()-new Date(x.snapshot_date).getTime())/86400000)>30).map(([k])=>k);
     e.signals.sort((a:any,b:any)=>(a.level==='alert'?0:1)-(b.level==='alert'?0:1)||Math.abs(b.amount||0)-Math.abs(a.amount||0));
     establishments.push({id:e.key,registryId:e.registryId,opaleEntity:e.opaleEntity,uai,name:e.name,states,trend,freshness,sources:e.sources,staleSources,signals:e.signals,budgetMetrics:e.budgetMetrics||null,fdrHistory:e.fdrHistory||[],treasury:e.treasury||null});
