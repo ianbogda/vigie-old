@@ -46,3 +46,110 @@
 .agency-chart-legend .bubble-size{width:15px;height:15px;border:2px solid #8296aa;background:transparent}
 .agency-chart-tooltip{position:absolute;z-index:4;pointer-events:none;min-width:180px;max-width:260px;padding:9px 11px;border:1px solid #dbe5ee;border-radius:9px;background:#fff;box-shadow:0 8px 24px rgba(24,49,79,.14);font-size:9px;color:#51677d}
 .agency-chart-tooltip b{display:block;margin-bottom:5px;font-size:10px;color:#173f68}.agency-chart-tooltip span{display:block;margin-top:2px}
+
+/* Vues agence — nuages de bulles */
+.agency-scatter{min-height:360px;margin-top:10px}
+.agency-scatter svg{display:block;width:100%;height:auto;min-height:350px;overflow:visible}
+
+/* Grille et axes */
+.agency-scatter .scatter-grid line{
+  stroke:#d9e5f0;
+  stroke-width:1;
+  stroke-dasharray:4 4
+}
+.agency-scatter .scatter-axis{
+  stroke:#5f7891;
+  stroke-width:1.6
+}
+.agency-scatter .scatter-zero{
+  stroke:#526d87;
+  stroke-width:1.5
+}
+.agency-scatter svg text{
+  font-size:10px;
+  fill:#50677e
+}
+
+/* Bulles */
+.agency-scatter-point{cursor:pointer}
+.agency-scatter-point circle{
+  stroke:#fff;
+  stroke-width:2;
+  transition:fill-opacity .15s ease,stroke-width .15s ease
+}
+
+/* Niveau d'attention */
+.agency-scatter-point.ok circle{
+  fill:#3f8ff0;
+  fill-opacity:.82
+}
+.agency-scatter-point.watch circle{
+  fill:#ff982f;
+  fill-opacity:.86
+}
+.agency-scatter-point.alert circle{
+  fill:#f04444;
+  fill-opacity:.88
+}
+
+.agency-scatter-point:hover circle{
+  fill-opacity:1;
+  stroke:#173f68;
+  stroke-width:3
+}
+
+/* Libellés des EPLE */
+.agency-scatter-point text{
+  font-size:9px;
+  font-weight:750;
+  fill:#173f68;
+  paint-order:stroke;
+  stroke:#fff;
+  stroke-width:3px;
+  stroke-linejoin:round
+}
+
+/* Légendes */
+.agency-scatter-legend{
+  display:grid;
+  grid-template-columns:minmax(0,1.3fr) minmax(220px,.7fr);
+  gap:12px;
+  margin-top:12px
+}
+.agency-scatter-legend>div{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  flex-wrap:wrap;
+  padding:12px 14px;
+  border:1px solid #dfe8f1;
+  border-radius:10px;
+  background:#fbfdff;
+  color:#536a80;
+  font-size:10px
+}
+.agency-scatter-legend b{
+  width:100%;
+  font-size:11px;
+  color:#173f68
+}
+.agency-scatter-legend span{
+  display:inline-flex;
+  align-items:center;
+  gap:6px
+}
+.agency-scatter-legend i{
+  display:inline-block;
+  width:13px;
+  height:13px;
+  border-radius:50%;
+  border:1px solid rgba(23,63,104,.12)
+}
+.agency-scatter-legend i.ok{background:#3f8ff0}
+.agency-scatter-legend i.watch{background:#ff982f}
+.agency-scatter-legend i.alert{background:#f04444}
+
+@media(max-width:900px){
+  .agency-scatter-legend{grid-template-columns:1fr}
+  .agency-scatter svg{min-height:300px}
+}
