@@ -14,7 +14,7 @@ export const api = {
   financial: (ets:string) => fetch(`/api/financial/${encodeURIComponent(ets)}`).then(json<any>),
   clcaMonthly: (ets:string) => fetch(`/api/clca/${encodeURIComponent(ets)}/monthly`).then(json<any>),
   accounting: (ets:string) => fetch(`/api/accounting/${encodeURIComponent(ets)}`).then(json<any>),
-  aged: (ets:string,kind:'clients'|'suppliers') => fetch(`/api/aged/${encodeURIComponent(ets)}/${kind}`).then(json<any>),
+  aged: (ets:string,kind:'clients'|'suppliers',exercise?:number) => fetch(`/api/aged/${encodeURIComponent(ets)}/${kind}${exercise?`?exercise=${exercise}`:''}`).then(json<any>),
   pcifStatus: () => fetch('/api/integrations/pcif/status').then(json<any>),
   syncPcif: (uais: string[]) => fetch('/api/integrations/pcif/sync', { method:'POST', headers:{'content-type':'application/json'}, body:JSON.stringify({uais}) }).then(json<any>),
   establishments: () => fetch('/api/establishments').then(json<any>),
