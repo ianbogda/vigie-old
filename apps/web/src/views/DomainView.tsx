@@ -164,9 +164,9 @@ function FlowView({current,all,onSelect,kind}:{current:Eple|null;all:Eple[];onSe
  if(!current)return <AgencyFlowView all={all} onSelect={onSelect} kind={kind}/>;
  if(loading)return <div className="page"><div className="loading">Construction de la vue {label}…</div></div>;
  const allEntries=(data?.entries||[]).filter((r:any)=>String(r.account||'').startsWith(expense?'6':'7'));
- const exercises=[...new Set(allEntries.map((r:any)=>new Date(r.periodDate)).filter((d:Date)=>!Number.isNaN(d.getTime())).map((d:Date)=>d.getFullYear()))].sort((a:number,b:number)=>b-a);
- const selectedExercise=exercises.includes(exercise)?exercise:(exercises.includes(new Date().getFullYear())?new Date().getFullYear():(exercises[0]??new Date().getFullYear()));
- if(selectedExercise!==exercise) queueMicrotask(()=>setExercise(selectedExercise));
+ const exercises:number[]=Array.from(allEntries.reduce((years:Set<number>,r:any)=>{const d=new Date(r.periodDate);if(!Number.isNaN(d.getTime()))years.add(d.getFullYear());return years},new Set<number>())).sort((a,b)=>b-a);
+ const currentExercise:number=new Date().getFullYear();
+ const selectedExercise:number=exercises.includes(exercise)?exercise:(exercises.includes(currentExercise)?currentExercise:(exercises[0]??currentExercise));
  const entries=allEntries.filter((r:any)=>new Date(r.periodDate).getFullYear()===selectedExercise),total=entries.reduce((n:number,r:any)=>n+Math.abs(Number(r.movement||0)),0),now=new Date(),cut=new Date(now.getTime()-30*86400000),recent=selectedExercise===now.getFullYear()?entries.filter((r:any)=>new Date(r.periodDate)>=cut):[],recentTotal=recent.reduce((n:number,r:any)=>n+Math.abs(Number(r.movement||0)),0);
  const byAccount=new Map<string,any>();for(const r of entries){const k=String(r.account);const a=byAccount.get(k)||{account:k,label:r.accountLabel||'',amount:0,count:0};a.amount+=Math.abs(Number(r.movement||0));a.count++;byAccount.set(k,a)}const accounts=[...byAccount.values()].sort((a,b)=>b.amount-a.amount).slice(0,6);
  const exec=expense?fin?.expenses:fin?.revenues,agedSum=aged?.summary||null,old=agedSum?.old??null,due=agedSum?.due??null,rate=!expense&&agedSum?.total?Math.max(0,Math.min(100,(1-Math.abs((agedSum.due||0)/(agedSum.total||1)))*100)):null;
