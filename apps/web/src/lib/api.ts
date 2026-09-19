@@ -21,5 +21,5 @@ export const api = {
   updateEstablishment: (id:number,body:any) => fetch(`/api/establishments/${id}`,{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify(body)}).then(json<any>),
   deleteEstablishment: (id:number) => fetch(`/api/establishments/${id}`,{method:'DELETE'}).then(json<any>),
   restoreEstablishment: (id:number) => fetch(`/api/establishments/${id}/restore`,{method:'POST'}).then(json<any>),
-  importOpale: (form: FormData, ets?: string) => fetch(`/api/import/opale${ets?`?ets=${encodeURIComponent(ets)}`:''}`, { method: 'POST', body: form }).then(json<any>),
+  importOpale: (form: FormData, ets?: string, exercise?: number) => { const q=new URLSearchParams(); if(ets)q.set('ets',ets); if(exercise)q.set('exercise',String(exercise)); return fetch(`/api/import/opale${q.toString()?`?${q}`:''}`,  { method: 'POST', body: form }).then(json<any>) },
 };
