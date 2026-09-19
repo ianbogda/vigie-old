@@ -47,3 +47,6 @@
 
 /* Vigie monochrome eye identity */
 .vigie-eye-logo{width:42px;height:42px;display:block;object-fit:contain;flex:0 0 42px}.login-brand-centered{justify-content:center;margin-bottom:22px}.vigie-eye-login{width:112px;height:112px;display:block;object-fit:contain}.login-brand-centered+ .login-icon{margin-inline:auto}.login-card h1{text-align:center}
+
+/* Bouton d'action secondaire — même langage visuel que les boutons de tutoriel. */
+.ui-soft-action{border:1px solid #cfe0f2;background:#f3f8fd;color:#174a78;border-radius:10px;padding:8px 11px;display:inline-flex;align-items:center;justify-content:center;gap:6px;font:inherit;font-weight:750;line-height:1;cursor:pointer;transition:background-color .12s,border-color .12s,transform .12s}.ui-soft-action:hover{background:#e8f2fb;border-color:#aacbe7}.ui-soft-action:active{transform:translateY(1px)}.ui-soft-action:focus-visible{outline:3px solid rgba(23,74,120,.18);outline-offset:2px}
