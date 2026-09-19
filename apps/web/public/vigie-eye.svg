@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Vigie">
+  <g fill="none" stroke="#12365b" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M6 32c7-10 15-15 26-15s19 5 26 15c-7 10-15 15-26 15S13 42 6 32Z"/>
+    <path d="M15 18c5-5 10-8 17-9 7 1 12 4 17 9M15 46c5 5 10 8 17 9 7-1 12-4 17-9"/>
+    <path d="M32 5 36 24 32 59 28 40Z" fill="#12365b" stroke="none"/>
+  </g>
+</svg>
