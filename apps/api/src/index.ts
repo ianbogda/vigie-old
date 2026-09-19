@@ -454,6 +454,22 @@ app.post('/api/import/opale',async(req:any,reply:any)=>{try{
 }catch(e:any){req.log.error(e);return reply.code(400).send({error:e.message||'Import impossible'})}});
 
 
+app.get('/api/clca/:ets/monthly',async(req:any,reply:any)=>{try{
+ const ets=String(req.params.ets||'').trim();
+ const establishment=(await pool.query('select * from establishments where upper(opale_entity)=upper($1) or upper(uai)=upper($1) or id::text=$1 limit 1',[ets])).rows[0];
+ const keys=[ets,establishment?.opale_entity,establishment?.uai,establishment?.name].filter(Boolean).map((x:any)=>String(x).trim());
+ const q=(await pool.query(`select extract(year from pl.order_date)::int exercise,extract(month from pl.order_date)::int month,
+   coalesce(sum(case when coalesce(pl.invoice_amount,0)>=0 then abs(coalesce(pl.invoice_amount,0)) else 0 end),0) expenses,
+   coalesce(sum(case when coalesce(pl.invoice_amount,0)<0 then abs(coalesce(pl.invoice_amount,0)) else 0 end),0) revenues,
+   count(*)::int lines
+  from purchase_lines pl join purchase_snapshots ps on ps.id=pl.snapshot_id
+  where pl.order_date is not null and (upper(coalesce(pl.establishment,''))=any($1::text[]) or upper(coalesce(ps.establishment_name,''))=any($1::text[]))
+  group by 1,2 order by 1,2`,[keys.map(x=>x.toUpperCase())])).rows;
+ const rows=q.map((r:any)=>({exercise:Number(r.exercise),month:Number(r.month),expenses:Number(r.expenses||0),revenues:Number(r.revenues||0),lines:Number(r.lines||0)}));
+ const exercises=[...new Set(rows.map((r:any)=>r.exercise))].sort((a:number,b:number)=>b-a);
+ return {source:'CLCA',establishment:establishment?{id:establishment.id,name:establishment.name,uai:establishment.uai,opaleEntity:establishment.opale_entity}:null,exercises,rows};
+ }catch(e:any){reply.code(500).send({error:e.message})}});
+
 app.get('/api/financial/:ets',async(req:any,reply:any)=>{try{
  const ets=String(req.params.ets||'').trim();const establishment=await requireEstablishment(req,reply,ets);if(!establishment)return;
  const entity=String(establishment.opale_entity||ets);
