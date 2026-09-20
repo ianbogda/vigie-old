@@ -27,9 +27,11 @@ export type HelpIndicator = {
   source?: string;
 };
 
+import type { IndicatorId } from './indicators';
+
 export type ViewHelpSpec = {
   purpose: string;
   sources: Array<OpaleSourceId | { name: string; format: string; note?: string }>;
   notes?: string[];
-  indicators?: HelpIndicator[];
+  indicators?: IndicatorId[];
 };

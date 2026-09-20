@@ -2,6 +2,7 @@ import { BookOpen, ChevronRight, FileSpreadsheet, HelpCircle, Info, X } from 'lu
 import { useState } from 'react';
 import { OPALE_HELP_REGISTRY } from '../help/opale';
 import { VIEW_HELP } from '../help/views';
+import { getIndicator } from '../help/indicators';
 import type { HelpFormula, OpaleSourceHelp, OpaleSourceId } from '../help/types';
 
 function isOpaleSourceId(value: unknown): value is OpaleSourceId {
@@ -38,7 +39,7 @@ export function ContextualHelp({view}:{view:string}) {
       <header><div><span>AIDE CONTEXTUELLE</span><h2>{view}</h2></div><button onClick={()=>setOpen(false)} aria-label="Fermer"><X/></button></header>
       <div className="help-body">
         <section className="help-purpose"><Info size={18}/><p>{spec.purpose}</p></section>
-        {spec.indicators?.length&&<section className="help-indicators"><div className="help-indicators-toggle-row"><div><h3>Indicateurs et méthodes de calcul</h3><p className="help-section-intro">Définition, formule et clés de lecture des indicateurs utilisés dans cette vue.</p></div><button className="help-source-link help-definitions-toggle" onClick={()=>setOpenIndicators(v=>!v)} aria-expanded={openIndicators}><BookOpen size={15}/>{openIndicators?'Masquer les définitions':'Voir les définitions'}</button></div>{openIndicators&&<div className="help-indicator-list">{spec.indicators.map(ind=><article className="help-indicator" key={ind.name}><div className="help-indicator-head"><div><b>{ind.name}</b>{ind.short&&<span>{ind.short}</span>}</div></div><p>{ind.meaning}</p>{ind.formula&&<MathFormula formula={ind.formula}/>} {ind.reading&&<div className="help-reading"><strong>Comment le lire</strong><span>{ind.reading}</span></div>}{ind.caution&&<div className="help-caution"><strong>Point d’attention</strong><span>{ind.caution}</span></div>}{ind.source&&<small className="help-indicator-source">Référence : {ind.source}</small>}</article>)}</div>}</section>}
+        {spec.indicators?.length&&<section className="help-indicators"><div className="help-indicators-toggle-row"><div><h3>Indicateurs et méthodes de calcul</h3><p className="help-section-intro">Définition, formule et clés de lecture des indicateurs utilisés dans cette vue.</p></div><button className="help-source-link help-definitions-toggle" onClick={()=>setOpenIndicators(v=>!v)} aria-expanded={openIndicators}><BookOpen size={15}/>{openIndicators?'Masquer les définitions':'Voir les définitions'}</button></div>{openIndicators&&<div className="help-indicator-list">{spec.indicators.map(id=>{const ind=getIndicator(id);return <article className="help-indicator" key={id}><div className="help-indicator-head"><div><b>{ind.name}</b>{ind.short&&<span>{ind.short}</span>}</div></div><p>{ind.meaning}</p>{ind.formula&&<MathFormula formula={ind.formula}/>} {ind.reading&&<div className="help-reading"><strong>Comment le lire</strong><span>{ind.reading}</span></div>}{ind.caution&&<div className="help-caution"><strong>Point d’attention</strong><span>{ind.caution}</span></div>}{ind.source&&<small className="help-indicator-source">Référence : {ind.source}</small>}</article>})}</div>}</section>}
         <section><h3>Fichier(s) attendu(s)</h3><div className="help-files">{spec.sources.map((entry,index)=>{
           if(isOpaleSourceId(entry)){
             const source=OPALE_HELP_REGISTRY[entry];
