@@ -516,6 +516,21 @@ app.get('/api/financial/:ets',async(req:any,reply:any)=>{try{
  return {establishment:{id:establishment.id,name:establishment.name,uai:establishment.uai,opaleEntity:entity},sources:{EBLC:eblc?.snapshot_date||null,YCONSDEP:depSnap?.snapshot_date||null,YCONSREC:recSnap?.snapshot_date||null,YBALAC:clientSnap?.snapshot_date||null,YBALAF:supplierSnap?.snapshot_date||null},executionHistory,expenses,revenues,receivables,payables,balance,fdr,fdrHistory,indicatorHistory,srh:null};
 }catch(e:any){req.log.error(e);return reply.code(400).send({error:e.message||'Analyse financière impossible'})}});
 
+app.get('/api/financial/:ets/fdr-analysis',async(req:any,reply:any)=>{try{
+ const ets=String(req.params.ets||'').trim(),establishment=await requireEstablishment(req,reply,ets);if(!establishment)return;const entity=String(establishment.opale_entity||ets),exercise=Number(req.query?.exercise||new Date().getFullYear()),sourceExercise=exercise-1;
+ const eblc=(await pool.query(`select * from financial_snapshots where upper(opale_entity)=upper($1) and source_type='EBLC' and exercise=$2 and split_part(coalesce(period_end,period,''),'/',1)='12' order by snapshot_date desc,created_at desc limit 1`,[entity,sourceExercise])).rows[0]||null;
+ let accounts:any=null;if(eblc){const q=(await pool.query(`select
+  coalesce(sum(case when account ~ '^(15|29|39|49|59)' then greatest(credit-debit,0) else 0 end),0) provisions,
+  coalesce(sum(case when account like '165%' then greatest(credit-debit,0) else 0 end),0) cautions,
+  coalesce(sum(case when account like '3%' then greatest(debit-credit,0) else 0 end),0) stocks,
+  coalesce(sum(case when account like '416%' then greatest(debit-credit,0) else 0 end),0) doubtful,
+  coalesce(sum(case when account ~ '^6[0-5]' and account !~ '^658' then debit-credit else 0 end),0) class6
+ from financial_balance_lines where snapshot_id=$1`,[eblc.id])).rows[0];accounts=Object.fromEntries(Object.entries(q).map(([k,v])=>[k,Number(v||0)]))}
+ const clientSnap=(await pool.query(`select * from financial_snapshots where upper(opale_entity)=upper($1) and source_type='YBALAC' order by snapshot_date desc,created_at desc limit 1`,[entity])).rows[0]||null;
+ let aged:any=null;if(clientSnap){const q=(await pool.query(`select coalesce(sum(case when account not like '416%' then before_121 else 0 end),0) over120,coalesce(sum(case when account not like '416%' then total else 0 end),0) total from financial_aged_lines where snapshot_id=$1`,[clientSnap.id])).rows[0];aged={snapshotDate:clientSnap.snapshot_date,sourceFilename:clientSnap.source_filename,over120:Number(q.over120||0),total:Number(q.total||0),overOneYear:null,exactOverOneYear:false,reason:'Le YBALAC importé par Vigie distingue actuellement les créances de plus de 120 jours, mais pas le sous-ensemble de plus de 365 jours.'}}
+ return {exercise,sourceExercise,eblc:eblc?{snapshotDate:eblc.snapshot_date,period:eblc.period_end||eblc.period,sourceFilename:eblc.source_filename}:null,accounts,aged};
+}catch(e:any){req.log.error(e);return reply.code(400).send({error:e.message||'Préparation de l’analyse du FdR impossible'})}});
+
 app.get('/api/accounting/:ets',async(req:any,reply:any)=>{try{
  const ets=String(req.params.ets||'').trim(),establishment=await requireEstablishment(req,reply,ets);if(!establishment)return;const entity=String(establishment.opale_entity||ets);
  const imp=(await pool.query(`select * from accounting_imports where upper(opale_entity)=upper($1) order by period_to desc nulls last,created_at desc limit 1`,[entity])).rows[0]||null;

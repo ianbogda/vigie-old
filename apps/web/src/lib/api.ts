@@ -12,6 +12,7 @@ export const api = {
   dashboard: () => fetch('/api/dashboard').then(json<Dashboard>),
   budget: (ets:string,exercise?:number) => fetch(`/api/budget/${encodeURIComponent(ets)}${exercise?`?exercise=${exercise}`:''}`).then(json<any>),
   financial: (ets:string) => fetch(`/api/financial/${encodeURIComponent(ets)}`).then(json<any>),
+  financialFdrAnalysis: (ets:string,exercise:number) => fetch(`/api/financial/${encodeURIComponent(ets)}/fdr-analysis?exercise=${exercise}`).then(json<any>),
   clcaMonthly: (ets:string) => fetch(`/api/clca/${encodeURIComponent(ets)}/monthly`).then(json<any>),
   accounting: (ets:string) => fetch(`/api/accounting/${encodeURIComponent(ets)}`).then(json<any>),
   aged: (ets:string,kind:'clients'|'suppliers',exercise?:number) => fetch(`/api/aged/${encodeURIComponent(ets)}/${kind}${exercise?`?exercise=${exercise}`:''}`).then(json<any>),
