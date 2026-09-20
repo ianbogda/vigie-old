@@ -729,7 +729,7 @@ app.get('/api/dashboard', async (req:any) => {
     const pcif=(await pool.query('select establishment_key,uai,campaign_label,campaign_status,mastery_level,mastery_scale,completion,answered,total,open_actions,major_risks,overdue_actions,trend,attention,source_url,raw_payload,updated_at from pcif_context')).rows;
     for(const e of establishments){
       e.pcif=pcif.find((p:any)=>(e.uai&&p.uai===e.uai)||p.establishment_key===e.id)||null;
-      if(e.pcif)e.pcif.consistency=masteryConsistency(e,e.pcif);
+      if(e.pcif){e.pcif.consistency=masteryConsistency(e,e.pcif);e.pcif.domains=Array.isArray(e.pcif.raw_payload?.domains)?e.pcif.raw_payload.domains:[];}
     }
   }catch(err){app.log.warn({err},'Construction du contexte PCIF impossible')}
   const signals=establishments.flatMap(e=>e.signals.map((s:any)=>({...s,establishment:e.name,establishmentId:e.id}))).sort((a:any,b:any)=>(a.level==='alert'?0:1)-(b.level==='alert'?0:1)||Math.abs(b.amount||0)-Math.abs(a.amount||0));
