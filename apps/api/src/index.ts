@@ -478,6 +478,16 @@ app.get('/api/financial/:ets',async(req:any,reply:any)=>{try{
  const execution=async(snap:any)=>{if(!snap)return null;const q=(await pool.query(`select coalesce(sum(budget),0) budget,coalesce(sum(committed),0) committed,coalesce(sum(accounted),0) accounted,coalesce(sum(in_progress),0) in_progress,coalesce(sum(available),0) available from financial_execution_lines where snapshot_id=$1`,[snap.id])).rows[0];return Object.fromEntries(Object.entries(q).map(([k,v])=>[k,Number(v||0)]))};
  const aged=async(snap:any)=>{if(!snap)return null;const q=(await pool.query(`select coalesce(sum(total),0) total,coalesce(sum(due),0) due,coalesce(sum(before_121),0) old,coalesce(sum(not_due),0) not_due from financial_aged_lines where snapshot_id=$1`,[snap.id])).rows[0];return {snapshotDate:snap.snapshot_date,sourceFilename:snap.source_filename,total:Number(q.total||0),due:Number(q.due||0),old:Number(q.old||0),notDue:Number(q.not_due||0)}};
  const [expenses,revenues,receivables,payables]=await Promise.all([execution(depSnap),execution(recSnap),aged(clientSnap),aged(supplierSnap)]);
+ // SRH : lecture factuelle de l'exécution du service spécial. Le résultat courant est la différence
+ // entre recettes et dépenses comptabilisées ; 0DENR/0CRED isole le crédit nourriture consommé.
+ const srhExecution=async(snap:any)=>{if(!snap)return null;const q=(await pool.query(`select
+  coalesce(sum(budget),0) budget,
+  coalesce(sum(accounted),0) accounted,
+  coalesce(sum(case when upper(coalesce(activity,'')) in ('0DENR','0CRED') then budget else 0 end),0) food_budget,
+  coalesce(sum(case when upper(coalesce(activity,'')) in ('0DENR','0CRED') then accounted else 0 end),0) food_accounted
+  from financial_execution_lines where snapshot_id=$1 and upper(trim(coalesce(service,'')))='SRH'`,[snap.id])).rows[0];return {budget:Number(q.budget||0),accounted:Number(q.accounted||0),foodBudget:Number(q.food_budget||0),foodAccounted:Number(q.food_accounted||0)}};
+ const [srhDep,srhRec]=await Promise.all([srhExecution(depSnap),srhExecution(recSnap)]);
+ const srh=(srhDep||srhRec)?{exercise:Number(depSnap?.exercise||recSnap?.exercise||new Date().getFullYear()),period:depSnap?.period_end||depSnap?.period||recSnap?.period_end||recSnap?.period||null,expenses:srhDep?.accounted??0,revenues:srhRec?.accounted??0,expenseBudget:srhDep?.budget??0,revenueBudget:srhRec?.budget??0,foodCredit:srhDep?.foodAccounted??0,foodBudget:srhDep?.foodBudget??0,result:(srhRec?.accounted??0)-(srhDep?.accounted??0),coverage:(srhDep?.accounted??0)>0?(srhRec?.accounted??0)/(srhDep?.accounted??0):null}:null;
  let balance:any=null;if(eblc){const q=(await pool.query(`select
   coalesce(sum(case when account ~ '^[67]' then credit-debit else 0 end),0) result,
   coalesce(sum(case when account like '68%' then debit-credit else 0 end),0) c68,
@@ -515,7 +525,7 @@ app.get('/api/financial/:ets',async(req:any,reply:any)=>{try{
   const snaps=(await pool.query(`select id,exercise,snapshot_date,period,period_end,created_at from financial_snapshots where upper(opale_entity)=upper($1) and source_type=$2 and exercise is not null order by exercise,snapshot_date,created_at`,[entity,sourceType])).rows;
   for(const snap of snaps){const q=(await pool.query(`select coalesce(sum(accounted),0) accounted from financial_execution_lines where snapshot_id=$1`,[snap.id])).rows[0];executionHistory[key].push({exercise:Number(snap.exercise),snapshotDate:snap.snapshot_date,period:snap.period_end||snap.period||null,accounted:Number(q.accounted||0)})}
  }
- return {establishment:{id:establishment.id,name:establishment.name,uai:establishment.uai,opaleEntity:entity},sources:{EBLC:eblc?.snapshot_date||null,YCONSDEP:depSnap?.snapshot_date||null,YCONSREC:recSnap?.snapshot_date||null,YBALAC:clientSnap?.snapshot_date||null,YBALAF:supplierSnap?.snapshot_date||null},executionHistory,expenses,revenues,receivables,payables,balance,fdr,fdrHistory,indicatorHistory,srh:null};
+ return {establishment:{id:establishment.id,name:establishment.name,uai:establishment.uai,opaleEntity:entity},sources:{EBLC:eblc?.snapshot_date||null,YCONSDEP:depSnap?.snapshot_date||null,YCONSREC:recSnap?.snapshot_date||null,YBALAC:clientSnap?.snapshot_date||null,YBALAF:supplierSnap?.snapshot_date||null},executionHistory,expenses,revenues,receivables,payables,balance,fdr,fdrHistory,indicatorHistory,srh};
 }catch(e:any){req.log.error(e);return reply.code(400).send({error:e.message||'Analyse financière impossible'})}});
 
 app.get('/api/financial/:ets/fdr-analysis',async(req:any,reply:any)=>{try{
