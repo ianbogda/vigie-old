@@ -151,7 +151,7 @@ function FinancialAnalysisModal({establishment,exercise,defaults,onClose}:{estab
  </div><footer><button onClick={onClose}>Fermer</button><button className="primary" onClick={()=>window.print()}><FileText size={15}/> Générer / imprimer l’Annexe III en PDF</button></footer></div></div>
 }
 
-function FinancialAnalysisView({current}:{current:Eple|null}){
+function FinancialAnalysisView({current}:{current:Eple}){
  const [budget,setBudget]=useState<any>(null),[financial,setFinancial]=useState<any>(null),[exercise,setExercise]=useState<number>(new Date().getFullYear());
  const [analysisOpen,setAnalysisOpen]=useState(false);
  useEffect(()=>{setBudget(null);setFinancial(null);if(current?.opaleEntity){api.budget(current.opaleEntity).then(setBudget).catch(()=>setBudget(null));api.financial(current.opaleEntity).then(setFinancial).catch(()=>setFinancial(null))}},[current?.opaleEntity]);
