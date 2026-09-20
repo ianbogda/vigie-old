@@ -479,15 +479,16 @@ app.get('/api/financial/:ets',async(req:any,reply:any)=>{try{
  const aged=async(snap:any)=>{if(!snap)return null;const q=(await pool.query(`select coalesce(sum(total),0) total,coalesce(sum(due),0) due,coalesce(sum(before_121),0) old,coalesce(sum(not_due),0) not_due from financial_aged_lines where snapshot_id=$1`,[snap.id])).rows[0];return {snapshotDate:snap.snapshot_date,sourceFilename:snap.source_filename,total:Number(q.total||0),due:Number(q.due||0),old:Number(q.old||0),notDue:Number(q.not_due||0)}};
  const [expenses,revenues,receivables,payables]=await Promise.all([execution(depSnap),execution(recSnap),aged(clientSnap),aged(supplierSnap)]);
  // SRH : lecture factuelle de l'exécution du service spécial. Le résultat courant est la différence
- // entre recettes et dépenses comptabilisées ; 0DENR/0CRED isole le crédit nourriture consommé.
+ // entre recettes et dépenses comptabilisées. Pour les denrées, le compte 611 est la référence
+ // comptable ; les activités (0DENR, 0CRED, etc.) ne sont qu'un niveau de ventilation.
  const srhExecution=async(snap:any)=>{if(!snap)return null;const q=(await pool.query(`select
   coalesce(sum(budget),0) budget,
   coalesce(sum(accounted),0) accounted,
-  coalesce(sum(case when upper(coalesce(activity,'')) in ('0DENR','0CRED') then budget else 0 end),0) food_budget,
-  coalesce(sum(case when upper(coalesce(activity,'')) in ('0DENR','0CRED') then accounted else 0 end),0) food_accounted
+  coalesce(sum(case when trim(coalesce(account,'')) like '611%' then budget else 0 end),0) food_budget,
+  coalesce(sum(case when trim(coalesce(account,'')) like '611%' then accounted else 0 end),0) food_accounted
   from financial_execution_lines where snapshot_id=$1 and upper(trim(coalesce(service,'')))='SRH'`,[snap.id])).rows[0];return {budget:Number(q.budget||0),accounted:Number(q.accounted||0),foodBudget:Number(q.food_budget||0),foodAccounted:Number(q.food_accounted||0)}};
  const [srhDep,srhRec]=await Promise.all([srhExecution(depSnap),srhExecution(recSnap)]);
- const srh=(srhDep||srhRec)?{exercise:Number(depSnap?.exercise||recSnap?.exercise||new Date().getFullYear()),period:depSnap?.period_end||depSnap?.period||recSnap?.period_end||recSnap?.period||null,expenses:srhDep?.accounted??0,revenues:srhRec?.accounted??0,expenseBudget:srhDep?.budget??0,revenueBudget:srhRec?.budget??0,foodCredit:srhDep?.foodAccounted??0,foodBudget:srhDep?.foodBudget??0,result:(srhRec?.accounted??0)-(srhDep?.accounted??0),coverage:(srhDep?.accounted??0)>0?(srhRec?.accounted??0)/(srhDep?.accounted??0):null}:null;
+ const srh=(srhDep||srhRec)?{exercise:Number(depSnap?.exercise||recSnap?.exercise||new Date().getFullYear()),period:depSnap?.period_end||depSnap?.period||recSnap?.period_end||recSnap?.period||null,expenses:srhDep?.accounted??0,revenues:srhRec?.accounted??0,expenseBudget:srhDep?.budget??0,revenueBudget:srhRec?.budget??0,foodExpenses:srhDep?.foodAccounted??0,foodCredit:srhDep?.foodBudget??0,foodRemaining:Math.max(0,(srhDep?.foodBudget??0)-(srhDep?.foodAccounted??0)),foodOverrun:Math.max(0,(srhDep?.foodAccounted??0)-(srhDep?.foodBudget??0)),result:(srhRec?.accounted??0)-(srhDep?.accounted??0),coverage:(srhDep?.accounted??0)>0?(srhRec?.accounted??0)/(srhDep?.accounted??0):null}:null;
  let balance:any=null;if(eblc){const q=(await pool.query(`select
   coalesce(sum(case when account ~ '^[67]' then credit-debit else 0 end),0) result,
   coalesce(sum(case when account like '68%' then debit-credit else 0 end),0) c68,
