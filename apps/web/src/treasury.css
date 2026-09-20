@@ -175,3 +175,5 @@
 .accounting-heatmap td:not(:first-child){text-align:center;font-weight:800;cursor:pointer}.accounting-heatmap .heat-alert{background:#ffd0c9;color:#a62a20}.accounting-heatmap .heat-watch{background:#ffe1b8;color:#9a5a00}.accounting-heatmap .heat-none{background:#f3f6f9;color:#a1afbc}
 @media(max-width:1200px){.agency-accounting-kpis{grid-template-columns:repeat(3,1fr)}.agency-accounting-top{grid-template-columns:1fr}}
 @media(max-width:700px){.agency-accounting-kpis{grid-template-columns:1fr 1fr}}
+
+.side-quote{visibility:visible}sidebar:hover .side-quote{visibility:hidden}
