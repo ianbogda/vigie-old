@@ -3,6 +3,7 @@ import type { ViewHelpSpec } from '../types';
 export const VIEW_HELP: Record<string, ViewHelpSpec> = {
   'Analyse financière': {
     purpose:"Comprendre la situation financière de l’établissement, sa structure et sa trajectoire à partir des données consolidées dans Vigie.",
+    requiredData:[{label:'FdR / BFdR',source:'YFDR / analyse financière',note:'dernier exercice disponible'},{label:'Résultat / CAF-IAF',source:'EBLC',note:'exercice identifié'},{label:'Créances',source:'YBALAC'},{label:'Dettes',source:'YBALAF'},{label:'5151',source:'écritures / balance'}],
     reading:["Commencer par les KPI FdR, BFdR, trésorerie, résultat et CAF/IAF.","Lire ensuite les évolutions pluriannuelles et les créances/dettes qui peuvent expliquer la situation.","Descendre vers l’analyse du FdR lorsque la situation nécessite une instruction plus détaillée."],
     sources:[{name:'YFDR',format:'CSV',freshness:'À actualiser après clôture ou nouvelle situation disponible.'},{name:'EBLC',format:'XLSX',freshness:'Utiliser une situation datée et identifier l’exercice.'},{name:'YCONSDEP / YCONSREC',format:'XLSX' },'YBALAC','YBALAF',{name:'Compte 5151',format:'CSV',freshness:'Une alimentation régulière est nécessaire pour lire la dynamique.'}],
     vigilance:["Comparer des données de même date avant de rapprocher FdR, BFdR et trésorerie.","Un indicateur isolé ne suffit pas à qualifier la soutenabilité financière.","Les données de l’exercice courant sont provisoires tant que le compte financier n’est pas arrêté."],
@@ -11,6 +12,7 @@ export const VIEW_HELP: Record<string, ViewHelpSpec> = {
   },
   'Budget': {
     purpose:"Suivre la construction et l’exécution budgétaires de l’établissement, puis repérer les écarts qui méritent une analyse.",
+    requiredData:[{label:'Budget',source:'Budget OP@LE',note:'budget courant et modifications intégrées'},{label:'Réalisé',source:'EBLC / données comptables',note:'exercice sélectionné'}],
     reading:["Lire d’abord les masses budgétées et réalisées.","Comparer ensuite les taux d’exécution par service, domaine et activité.","Examiner enfin les points d’attention et revenir aux données sources si une valeur doit être expliquée."],
     sources:[{name:'Budget OP@LE',format:'.lis ou .xlsx',freshness:'À réimporter après une modification budgétaire ou lorsqu’une nouvelle situation est nécessaire.'},{name:'EBLC',format:'XLSX'}],
     vigilance:["Un taux d’exécution n’est pas une cible calendaire normative.","Le rythme dépend du calendrier réel des opérations, engagements et recettes.","Toujours distinguer budget, engagé, réalisé, en cours et disponible."],
@@ -19,6 +21,7 @@ export const VIEW_HELP: Record<string, ViewHelpSpec> = {
   },
   'Dépenses': {
     purpose:"Piloter l’exécution des dépenses et identifier les opérations, comptes ou fournisseurs qui nécessitent un contrôle.",
+    requiredData:[{label:'Dépenses',source:'YCONSDEP',note:'exercice sélectionné'},{label:'Évolution mensuelle',source:'CLCA',note:'si disponible'},{label:'Dettes fournisseurs',source:'YBALAF'}],
     reading:["Commencer par les montants de l’exercice et la dynamique récente.","Lire les dettes échues et anciennes pour apprécier les décaissements en attente.","Examiner ensuite les comptes et fournisseurs qui expliquent les concentrations ou accélérations."],
     sources:[{name:'YCONSDEP',format:'XLSX',freshness:'À actualiser selon le rythme de supervision souhaité.'},'YBALAF'],
     vigilance:["Une accélération récente n’est pas automatiquement une anomalie : elle peut correspondre au calendrier normal des achats.","Une concentration fournisseur est un signal d’examen, pas une irrégularité en elle-même."],
@@ -27,6 +30,7 @@ export const VIEW_HELP: Record<string, ViewHelpSpec> = {
   },
   'Recettes': {
     purpose:"Piloter l’exécution des recettes et repérer les créances dont le recouvrement ou l’ancienneté nécessite une attention.",
+    requiredData:[{label:'Recettes',source:'YCONSREC',note:'exercice sélectionné'},{label:'Évolution mensuelle',source:'CLCA',note:'si disponible'},{label:'Créances',source:'YBALAC'},{label:'TnR',source:'EBLC',note:'comptes 411–418 / compte 70'}],
     reading:["Lire les recettes de l’exercice et leur dynamique récente.","Examiner les créances à recouvrer et le stock ancien.","Mettre enfin le TnR en regard du volume de recettes et de l’ancienneté YBALAC."],
     sources:[{name:'YCONSREC',format:'XLSX'},'YBALAC',{name:'EBLC',format:'XLSX',note:'Nécessaire au TnR.'}],
     vigilance:["Le TnR n’est pas 100 % moins un taux d’encaissement calculé sur une autre assiette.","Le stock > 121 jours n’est pas assimilable à des créances > 1 an."],
@@ -35,6 +39,7 @@ export const VIEW_HELP: Record<string, ViewHelpSpec> = {
   },
   'Trésorerie': {
     purpose:"Suivre la trajectoire de trésorerie et apprécier sa soutenabilité sans isoler le seul solde du compte 5151.",
+    requiredData:[{label:'5151',source:'balance / écritures'},{label:'Charges',source:'analyse financière'},{label:'FdR / BFdR',source:'analyse financière',note:'dernier exercice disponible'},{label:'TnR',source:'EBLC'},{label:'Créances anciennes',source:'YBALAC'},{label:'Dettes exigibles',source:'YBALAF'}],
     reading:["Commencer par l’autonomie observée et sa variation récente.","Lire ensuite FdR/BFdR et la trésorerie après dettes exigibles pour comprendre la structure.","Examiner enfin TnR, créances anciennes et dettes exigibles pour apprécier la qualité de la liquidité."],
     sources:[{name:'Écritures du compte 5151',format:'CSV',freshness:'Alimentation régulière recommandée ; Vigie ne simule pas les périodes absentes.'},'YBALAC','YBALAF',{name:'Analyse financière',format:'FdR / BFdR',note:'Vérifier la date de référence.'},{name:'EBLC',format:'XLSX',note:'Utilisée notamment pour le TnR.'}],
     vigilance:["Le 5151 observé n’est pas automatiquement égal à la trésorerie nette comptable.","FdR/BFdR et 5151 peuvent relever de dates différentes.","Les seuils 30 / 42 / 65 jours sont des repères de pilotage Vigie, pas des seuils réglementaires."],
@@ -43,6 +48,7 @@ export const VIEW_HELP: Record<string, ViewHelpSpec> = {
   },
   'Clients': {
     purpose:"Analyser les créances clients, leur ancienneté et les situations nécessitant une attention particulière.",
+    requiredData:[{label:'Créances clients',source:'YBALAC',note:'balance âgée datée'},{label:'TnR',source:'EBLC',note:'lorsqu’il est affiché'}],
     reading:["Lire l’encours total puis la part échue et ancienne.","Repérer les EPLE ou tiers concentrant le stock ancien.","Descendre ensuite jusqu’aux pièces pour préparer le contrôle ou l’action de recouvrement."],
     sources:['YBALAC',{name:'EBLC',format:'XLSX',note:'Nécessaire au TnR lorsque celui-ci est affiché.'}],
     vigilance:["La balance âgée décrit un stock à une date donnée ; sa fraîcheur conditionne l’analyse.","La tranche > 121 jours ne signifie pas > 1 an.","Un encours ancien doit être rapproché des actions de recouvrement et de la nature de la créance."],
@@ -51,6 +57,7 @@ export const VIEW_HELP: Record<string, ViewHelpSpec> = {
   },
   'Fournisseurs': {
     purpose:"Analyser les dettes fournisseurs, leur ancienneté et les décaissements susceptibles d’affecter rapidement la trésorerie.",
+    requiredData:[{label:'Dettes fournisseurs',source:'YBALAF',note:'balance âgée datée'}],
     reading:["Lire les dettes totales puis la part échue et ancienne.","Repérer les EPLE ou fournisseurs concentrant les montants exigibles.","Descendre ensuite jusqu’aux pièces concernées."],
     sources:['YBALAF'],
     vigilance:["Une dette échue n’est pas automatiquement une anomalie ; sa cause doit être vérifiée.","Une balance âgée ancienne peut sous-estimer ou surestimer la pression de décaissement actuelle."],
@@ -59,6 +66,7 @@ export const VIEW_HELP: Record<string, ViewHelpSpec> = {
   },
   'Comptabilité générale': {
     purpose:"Examiner les comptes des classes 1 à 8, les signaux comptables et les pièces non soldées afin de cibler les contrôles.",
+    requiredData:[{label:'Comptes classes 1 à 8',source:'données comptables OP@LE'},{label:'Pièces non soldées',source:'YGPIE1'}],
     reading:["Commencer par les KPI de la vue agence ou la synthèse de l’EPLE.","Repérer le compte ou la famille de comptes concernés.","Descendre ensuite vers les pièces puis les écritures qui expliquent le signal."],
     sources:[{name:'Données comptables OP@LE — classes 1 à 8',format:'CSV',freshness:'À actualiser pour disposer d’une situation comptable représentative.'},'YGPIE1'],
     vigilance:["Un solde inhabituel ou une pièce ouverte est un signal de contrôle, pas une anomalie démontrée.","Le sens du solde dépend de la nature du compte.","YGPIE1 décrit les pièces non soldées à la date de l’export."],
@@ -67,6 +75,7 @@ export const VIEW_HELP: Record<string, ViewHelpSpec> = {
   },
   'Maîtrise des risques': {
     purpose:"Mettre les observations Vigie en regard du contexte PCIF afin de prioriser les contrôles et l’accompagnement, sans modifier le diagnostic PCIF.",
+    requiredData:[{label:'Diagnostic / maîtrise',source:'PCIF Académie',note:'campagne identifiée'},{label:'Risques / actions',source:'PCIF Académie'},{label:'Constats métier',source:'données consolidées Vigie'}],
     reading:["Lire d’abord la couverture du diagnostic avant le niveau de maîtrise.","Examiner ensuite les risques majeurs, actions en retard et domaines d’attention.","Utiliser enfin les cohérences PCIF × Vigie pour choisir les points à approfondir dans PCIF Académie."],
     sources:[{name:'PCIF Académie',format:'Synthèse synchronisée',freshness:'La campagne et sa date de synchronisation doivent être identifiées.'},{name:'Données des vues métier Vigie',format:'Sources consolidées'}],
     vigilance:["Une maîtrise élevée sur une faible couverture est peu représentative.","Vigie n’altère ni la cotation des risques ni le plan d’action PCIF.","Une incohérence PCIF × Vigie sert à prioriser un examen ; elle ne démontre pas à elle seule une défaillance de maîtrise."],
