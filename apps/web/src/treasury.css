@@ -220,3 +220,27 @@
 .agency-bubble:hover .bubble-hover-label,.agency-bubble:focus .bubble-hover-label,.agency-scatter-point:hover>text,.accounting-agency-dot:hover>text{opacity:1}
 .agency-bubble circle,.agency-scatter-point circle,.accounting-agency-dot circle{transition:stroke-width .12s ease,filter .12s ease}
 .agency-bubble:hover circle,.agency-scatter-point:hover circle,.accounting-agency-dot:hover circle{stroke:#173f68;stroke-width:2.5;filter:drop-shadow(0 2px 3px rgba(23,63,104,.18))}
+
+
+/* v0.0.62 — Trésorerie agence : échelle de soutenabilité */
+.agency-treasury-bubbles .treasury-sustainability{stroke:none}
+.agency-treasury-bubbles .treasury-sustainability.alert{fill:#fff0f0}
+.agency-treasury-bubbles .treasury-sustainability.caution{fill:#fff6e7}
+.agency-treasury-bubbles .treasury-sustainability.comfortable{fill:#eff9f3}
+.agency-treasury-bubbles .treasury-sustainability.high{fill:#fff}
+.agency-treasury-bubbles .treasury-sustainability-line{stroke-width:1.4;stroke-dasharray:5 4}
+.agency-treasury-bubbles .treasury-sustainability-line.alert{stroke:#d64a4a}
+.agency-treasury-bubbles .treasury-sustainability-line.caution{stroke:#e39a31}
+.agency-treasury-bubbles .treasury-sustainability-line.break{stroke:#8295a8;stroke-dasharray:3 4}
+.agency-treasury-bubbles .treasury-zone-label{font-size:8px;font-weight:850;letter-spacing:.06em;text-anchor:middle}
+.agency-treasury-bubbles .treasury-zone-label.alert{fill:#b83c3c}
+.agency-treasury-bubbles .treasury-zone-label.caution{fill:#a96813}
+.agency-treasury-bubbles .treasury-zone-label.comfortable{fill:#287354}
+.agency-treasury-bubbles .treasury-zone-label.high{fill:#718399}
+.agency-treasury-bubbles .treasury-scale-break{fill:#718399;font-size:8px;font-style:italic;text-anchor:start}
+.agency-treasury-bubbles .treasury-bubble.alert circle{fill:#df4c4c;fill-opacity:.9}
+.agency-treasury-bubbles .treasury-bubble.caution circle{fill:#ed9f34;fill-opacity:.88}
+.agency-treasury-bubbles .treasury-bubble.comfortable circle{fill:#2f9a69;fill-opacity:.84}
+.agency-treasury-bubbles .treasury-bubble.high circle{fill:#5b8fbd;fill-opacity:.76}
+.treasury-sustainability-legend{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:7px 0 2px;padding:9px 11px;border:1px solid #e1e8ef;border-radius:9px;background:#fbfcfd;color:#60758a;font-size:9px}
+.treasury-sustainability-legend span{display:inline-flex;align-items:center;gap:5px}.treasury-sustainability-legend b{color:#294b6c}.treasury-sustainability-legend i{width:10px;height:10px;border-radius:3px;display:inline-block}.treasury-sustainability-legend i.alert{background:#df4c4c}.treasury-sustainability-legend i.caution{background:#ed9f34}.treasury-sustainability-legend i.comfortable{background:#2f9a69}.treasury-sustainability-legend i.high{background:#5b8fbd}
