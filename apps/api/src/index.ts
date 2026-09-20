@@ -359,7 +359,14 @@ async function parseFinancialXlsx(buf:Buffer,type:string,contextEntity:string){
   if(type.startsWith('YCONS')){
     const entity=cellText(first[idx('Etablissement si un seul sélectionné')])||cellText(first[idx('Etablissement')])||contextEntity;
     const uai=cellText(first[idx('Intitulé réduit')]);const dateText=cellText(first[idx('Date')]);const snapshotDate=parseFrDate(dateText)||new Date().toISOString().slice(0,10);const exercise=new Date(snapshotDate).getFullYear();
-    const account=idx('Compte'), amount=idx('Montant colonne 1');
+    // Les éditions YCONS ne nomment pas toutes la dimension comptable de la même manière.
+    // Dans l'export standard Op@le, les dimensions sont organisées par blocs de 3 colonnes :
+    // section (4), groupe de service (7), service (10), domaine (13), activité (16), compte (19).
+    // On privilégie toutefois un en-tête explicite lorsqu'il existe.
+    const accountCandidates=['Compte','Compte budgétaire','Compte de niveau 1','Compte niveau 1'];
+    const explicitAccount=accountCandidates.map(idx).find(i=>i>=0)??-1;
+    const account=explicitAccount>=0?explicitAccount:19;
+    const amount=idx('Montant colonne 1');
     return {type,entity,uai,snapshotDate,exercise,period:null,rows:data.map((r,i)=>({line:i+hi+2,direction:type==='YCONSDEP'?'DEP':'REC',section:cellText(r[4]),serviceGroup:cellText(r[7]),service:cellText(r[10]),domain:cellText(r[13]),activity:cellText(r[16]),account:cellText(r[account]),label:cellText(r[account+1]),budget:cellNum(r[amount]),committed:cellNum(r[amount+1]),accounted:cellNum(r[amount+2]),inProgress:cellNum(r[amount+3]),available:cellNum(r[amount+4])})).filter(x=>x.service||x.account)};
   }
   const entity=cellText(first[idx('Etablissement')])||contextEntity;const uai=cellText(first[idx('Libellé réduit établissement')]);const dateText=cellText(first[idx('Date')]);const snapshotDate=parseFrDate(dateText)||new Date().toISOString().slice(0,10);const exercise=new Date(snapshotDate).getFullYear();
