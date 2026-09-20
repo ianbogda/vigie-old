@@ -16,8 +16,20 @@ export type OpaleSourceHelp = {
   beforeImport?: string;
 };
 
+export type HelpFormula = { numerator?: string; denominator?: string; expression?: string; suffix?: string };
+export type HelpIndicator = {
+  name: string;
+  short?: string;
+  meaning: string;
+  formula?: HelpFormula;
+  reading?: string;
+  caution?: string;
+  source?: string;
+};
+
 export type ViewHelpSpec = {
   purpose: string;
   sources: Array<OpaleSourceId | { name: string; format: string; note?: string }>;
   notes?: string[];
+  indicators?: HelpIndicator[];
 };
